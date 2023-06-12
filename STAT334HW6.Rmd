@@ -1,0 +1,184 @@
+---
+title: "STAT334HW6"
+author: "Cassie Giovannetti"
+date: "2023-06-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Problem 1 uses the USTemp6.csv file. The data are 55 U.S. cities. The variables are:
+JanTemp (y) average January high temperature (in degrees Fahrenheit)
+Lat latitude (in degrees north of the equator)
+Long longitude (in degrees west of the prime meridian)
+Altitude altitude (in feet above sea level)
+CoastMiles distance from the nearest coastline (in miles)
+Coast Yes = city on the coast, No = city not on the coast (baseline = No)
+Region East, Central, West (baseline = Central)
+
+
+#1. Run Model 1: JanTemp vs. cLat, cLong, cAltitude, cCoastMiles, cLat:cLong.
+
+(a) Using Model 1, interpret the meaning of the coefficient of cLat in the context of the problem.
+
+After adjusting for other variables, each increase of one degree to the average latitude is associated with a decrease of 1.8665119 degrees Fahrenheit in average January high temperature for average latitude and longitude. 
+
+(b) Using Model 1, what is the effect of a latitude increase of 1 degree when longitude is 20 degrees farther west than average (cLong = +20)? Compare this to the effect of a latitude increase of 1 degree when longitude is 20 degrees farther east than average (cLong = -20). (Do two separate calculations.)
+
+Effect of Latitude(cLong = +20) = -1.8665119 + 0.0315266(20) = -1.2359799
+
+Effect of Latitude(cLong = -20) = -1.8665119 + 0.0315266(-20) = -2.4970439
+
+(c) Using Model 1, test whether the interaction term cLat:cLong is statistically significant using a 5% individual significance level. Explain how you found the result of the test, and interpret the result in
+the context of the problem.
+
+The linear regression model tests the interaction term cLat:cLong at a 5% significance level. At a 5% significance level,(p < 0.0001) there is strong evidence that the effect of latitude on the average January temperature is depends on the longitude. 
+
+
+#Run Model 2: JanTemp vs. cLat, cAltitude, Region, Coast, Region:Coast.
+(d) Using Model 2, write out the regression equation to predict JanTemp for cities on the coast in the west region. Simplify the equation as much as possible.
+
+JanTemp = 40.3626553 - 2.0749845(cLat) - 0.0035870(cAltitude)
+
+(e) Using Model 2, what is the effect of a city being on the coast in the west region? Compare this to the effect of a city being on the coast in the central region. (Do two separate calculations.)
+
+Effect(west:coast) = 17.8975091
+
+Effect(cenral:coast) = 1.8485780
+
+(f) Using Model 2, test whether the interaction term Region:Coast is statistically significant using a 5% individual significance level. Explain how you found the result of the test, and interpret the result in
+the context of the problem.
+
+Using the ANOVA model, we can look at the p-value for the interaction term Region:Coast. At the 5% significance level, there is not enough evidence (p = 0.49326 > 0.05) to convince us that the effect of region on the average January temperature depends on if the city is on the coast. 
+
+
+#Run Model 3: JanTemp vs. cLat, cAltitude, cCoastMiles, Region, Region:cCoastMiles.
+
+(g) Using Model 3, what is the effect of each 100 miles farther from the coast in the west region? Compare this to the effect of each 100 miles farther from the coast in the central region. (Do two separate calculations.)
+
+Effect(west:100): 8.353e+00 + -1.270e-02(100) + -9.637e-03(100) = -13.984
+
+Effect(central:100): -1.270e-02(100) =  -1.27
+
+(h) Using Model 3, test whether the interaction term Region:cCoastMiles is statistically significant using a 5% individual significance level. Explain how you found the result of the test, and interpret the result in the context of the problem.
+
+Using the Anova model of Type II tests, we can find the p-value for the interaction term Region:cCoastMiles. Using the the 5% individual significance level, there is not enough evidence (0.08692 < 0.05) that the effect of region on the average January temperature depends on the distance from the closest coastline.
+
+(i) Using residual plots, which of the three models above does the best job of fixing the regression assumptions. You do not need to write out your assumption checks for every model, but you do need to describe what you saw that made your decision.
+
+Based on the three models, Model 3 does the best job of fixing the regression assumptions. The QQ plot of Model 3 is much more linear than Model 1 or 2. The residual plot of Model 3 has more equal amounts of residuals on either side of 0 than Model 1 and Model 2. 
+
+(j) Which of the models above have multicollinearity problems. Describe any problems as moderate or severe and explain how you reached your decision for each model.
+
+Model 2 has moderate multicollinearity issue with the variables CoastYes and RegionEast:CoastYes interaction based on their VIF values. 
+Model 3 has a few moderate and a few very severe multicollineaity problems with its variables. The moderate issues lie with cAltitude and cCoastMiles where as RegionEast and RegionEast:cCoastMiles have VIFs of 18 and 17 respectively that indicate a severe problem. 
+
+
+
+---------
+
+#Problems 2 and 3 use the CommProp.csv file. The data are 81 randomly selected commercial properties.
+The variables are:
+Rental (y) rental rate of the property (in dollars per square foot)
+Age age of the building (in years)
+Expenses operating expenses and taxes as a percentage of the rent (in percent)
+Vacancy percentage of the building that is vacant (in percent)
+Sqft100K size of the building (in 100,000s of square feet, 1 = 100,000 sqft.)
+Run a regression of Rental vs. Age, Expenses, Vacancy, and Sqft. Compute VIFs with your regression.
+
+#Run Model 1: Rental vs. cAge, cExpenses, cVacancy, and cSqft100K
+
+2. Run the “all possible regressions” procedure on Model 1.
+(a) Which of the possible subsets of predictors from Model 1 is the best according to Mallow’s Cp? List all of the model terms in that subset.
+
+According to Mallow's CP, the best is the 11th model with the 3 predictors Age, cExpenses, and cSqft100K.
+
+(b) Which of the possible subsets of predictors from Model 1 is the best according to AIC? List all of the model terms in that subset.
+
+According to AIC, the best model is the 11th model with the 3 predictors Age, cExpenses, and cSqft100k.
+
+(c) Which of the possible subsets of predictors from Model 1 is the best according to SBC? List all of the model terms in that subset.
+
+According to SBC, the best model is the 11th model with the 3 predictors Age, cExpenses, and cSqft100k.
+
+(d) Do the three criteria above choose the same or different best models? If different, how do they differ?
+
+The three criteria all choose the same models.
+
+
+#Run Model 2: Rental vs. cAge, cExpenses, cVacancy, cSqft100K and all two-way interactions.
+Use the “best subsets” procedure on Model 2 from Problem 2.
+(e) Which of the possible subsets of predictors from Model 2 is the best? List all of the model terms in that subset. Explain what you looked at in the output to reach your decision.
+
+The best subset of predictors from Model 2 is the one with 7 predictors: cAge cExpenses cVacancy cSqft100K cAge:cExpenses cAge:cVacancy cAge:cSqft100K. I decided this one because has the lowest Mallow's CP and AIC. 
+
+(f) Does the model that you selected violate any of the rules of model building? Explain. If your “best” model violates the model-building, what is the “best” model that doesn’t?
+
+No, the model does not violate any of the rules of model building. The model does not violate any assumptions. Linearity, normality, independence, and equal variance all look okay based on the residual plots and qq plot. There are a few high leverage values but their are no influential points in the model.
+
+
+#Run “stepwise regression with forward selection” on Model 2 using α = 0.01 to enter the model.
+
+(g) List all of the model terms in the selected model.
+
+cSqft100K, cAge, cExpenses, cVacancy, cAge:cVacancy
+
+(h) Does the selected model violate any of the rules of model building? Explain.
+
+No, it does not violate any of the rules of model building. None of the assumptions are violated.
+
+Run “stepwise regression with forward selection” on Model 2 using the AIC statistic to choose the model.
+
+(i) List all of the model terms in the selected model.
+
+cSqft100K, cAge, cExpenses, cVacancy, cAge:cVacancy, cAge:cExpenses, cSqft100K:cAge
+
+
+(j) Does the selected model violate any of the rules of model building? Explain.
+
+No, it does not violate any of the rules of model building. None of the assumptions are violated.
+
+------------------------------------------------------------------------
+
+
+#3. This problem also uses the CommProp data set, but without the Vacancy variable.
+
+(a) Run a regression of Rental rate vs. the original Age, Expenses, Sqft100K, and Age2 (all uncentered).Call this Model 3. Plot the studentized residuals vs. predicted values and vs. each predictor (Age, Expenses, Sqft). Explain whether or not the polynomial model fits the data.
+
+The polynomial fits the model. All the predictor variables are statistically significant and the assumptions are not violated.
+
+(b) Interpret the adjusted R2 of the regression from part (a) in the context of the data.
+
+Approximately 59.27% of the variability in the average January temperature is explained by Age, Expenses, Sqft100K, and Age2 in the mode after adjusting for sample size and number of predictors. 
+
+(c) Is there any multicollinearity in the regression? Explain how you know and what is causing the problem (if there is one).
+
+Yes, there is multicollinearity in the regression. The VIFs are extremely high at 34 and 32 for Age.poly1 and Age.poly2, so these variables are a severe problem.
+
+(d) Run a new regression of Rental rate vs. cAge, cExpenses, cSqft, and cAge2 (all centered). (Age needs to be centered before you square it—not after.) Call this Model 4. Is there any multicollinearity in this regression? Explain.
+
+There is no multicollinearity in this regression. All the VIFS are less than 2, which means that there isn't very much or no mulitcollinearity in the regression.
+
+(e) Test (αI = 0.05) whether a linear model with cAge is better than the quadratic model used in part (d).Write out the hypotheses, test statistic, p-value, test result, and a sentence describing the result of the test in context.
+
+H0: beta1 = beta2 = beta3 = beta4
+HA: at least one betaj does not equal 0
+
+F-Stat is 5.9078. 
+P-value is 0.01743.
+
+We have evidence to suggest that the quadratic model (Model 2) with cAge2 is better than the linear model (Model 1) with only cAge. 
+
+(f) Do the same test in part (e), but assume that you are testing every predictor using overall αE = 0.05. Explain whether or not the results of the test change.
+
+The results of the test do change because at the overall signifcance level of 0.05. If we use Bonferroni adjustment, the p-value we got is no longer statistically significant. We do not have enough evidence in this case to suggest that the quadratic model (Model 2) with cAge2 is better than the linear model (Model 1) with only cAge.
+
+(g) Explain the advantages and disadvantages of using the Bonferroni adjustment in part (f).
+
+Using the Bonferonni adjustment, we adjust the significance level for each predictor and it reduces the likelihood of falsely rejecting the null hypothesis but it also makes it harder to reject the null hypothesis. Although we can be more confident with a Bonferonni adjustment if we reject the null hypothesis, it's more conservative and may lead to a Type II error.
+
+(h) Using Model 4, estimate with 95% confidence the mean rental rate for 8-year old properties with 16% in expenses each month and 250,000 square feet. (Hint: The R script has code to center the input values for the interval. Replace the ? in the R code with the input values for each variable.)
+
+We are 95% confident that the mean rental rate for 8-year old properties with 16% in expenses each month and 250,000 square feet is between 16.49611 and in 17.9661 dollars per square foot. 
