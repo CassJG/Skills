@@ -1,0 +1,371 @@
+---
+title: "Final Exam Part 3 and 4"
+author: "Cassie Giovannetti"
+date: "3/18/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(broom)
+library(gridExtra)
+```
+
+
+```{r}
+nptrails <- read.csv(here("national_park_trails.csv"))
+```
+
+The two National Parks closest to San Luis Obispo are Kings Canyon and Sequoia. These two parks border each other, and are managed under a single forest service; sometimes, they are simply referred to together as “SeKi”.
+
+In this section, please show your code and output, but also include appropriate text discussion to interpret the output and answer the question.
+
+```{r}
+slotrails <- nptrails %>%
+  filter(area_name == "Kings Canyon National Park"| area_name == "Sequoia National Park")
+```
+
+
+Trail Elevation Gain [50 points]
+Do the trails in these parks have different profiles of elevation gains?
+
+```{r}
+slotrails %>%
+  group_by(area_name) %>%
+  summarise(mean = mean(elevation_gain))
+```
+
+```{r}
+slotrails %>%
+  group_by(area_name) %>%
+  summarise(standard_deviation = sd(elevation_gain))
+```
+
+```{r}
+slotrails %>%
+  group_by(area_name) %>%
+  summarise(median = median(elevation_gain))
+```
+
+
+Overall, Kings Canyon Trails has a higher average elevation gain than Sequoia National Park with a mean of 1729.67 for Kings Canyon and a mean of 1236.96 for Sequoia. However, the standard deviation for elevation gains across the trails is more spread out for Kings Canyon versus Sequoia. The median, similar to the mean, of the trails elevation gains also show Kings Canyon with a higher average of elevation gains for it's trails than Sequoia. 
+
+Create a visualization that explores the elevation gain of trails in SeKi as a function of the trail length, for trails in Sequoia and Kings Canyon. You should also include the type of trail in your visualization.
+
+```{r}
+slotrails %>%
+  ggplot(aes(x = length, y = elevation_gain, color = route_type)) +
+  geom_point() +
+  facet_wrap( ~ area_name) +
+  labs(title = "Trail Length vs Elevation Gain",
+       x = "Trail Length",
+       y = "Elevation_Gain", 
+       subtitle = "Accounting for National Park and Route Type")
+
+```
+
+
+Describe the relationships that you see in the visualization. At a minimum, you should address the following questions:
+
+Does it appear that the relationship between a trail’s elevation gain and its length is linear?
+
+It does apear that relationship between a trail's elevation gain and it's length is linear for both National Parks.
+
+Does it appear that the relationship between elevation gain and length is different for the two national parks?
+
+The relationship between elevation gain and length is not extremely different for the two national parks; however, Kings Canyon has a widerspread of trail lengths and elevations that extend out where as Sequoia has a lot of trails very similar to each other and closer together in length and elevation.
+
+How does the relationship between elevation gain and length differ by the type of trail?
+
+For both national parks, we see that the loop is either short and with low elevation or its long and with high elevation. For the out and back route type, we see the data mostly condensed in the medium range of trails in length and elevation. For point to point trails, those tend to be longer and with higher elevation. 
+
+Your visualization should be something you would include in a written report. At a bare minimum you must have: clear plot labels and aesthetically appealing colors.
+
+Simple Linear Regression [50 points]
+We are interested in building a model for predicting the elevation gain of a trail at SeKi. We would like for the model to explain as much variability in elevation gain as possible, but as be as simple as possible. Thus, we will focus on finding the simple linear regression that explains the most variability in elevation gain.
+
+We are going to use R2 for our selection criteria, with the goal of finding the “best” model that explains a trail’s elevation gain. We are only going to consider the quantitative variables included in this dataset as contenders for the “best” explanatory variable. Again, your final model should have one explanatory variable.
+
+Report your top two models and their associated R2 values. Your model summary should be as tidy as possible, hence you should not use the summary() function to report your models!
+
+My top two models were between trail length and elevation gain and between difficulty rating and elevation gain. My final model would have to be trail length, which has a high R-squared value of 0.9000334 while the explanatory variable difficulty rating had an R-squared of 0.4164015. You can see both models below; however, the first one is the best model and the trail length explains a lot of variation in elevation gain.
+```{r}
+slotrails_lm <- slotrails %>%
+  lm(elevation_gain ~ length, data = .)
+glance(slotrails_lm)
+aug <- augment(slotrails_lm)
+pred <- predict(slotrails_lm)
+sig <- sigma(slotrails_lm)
+noise <- function(x, mean = 0, sd) {
+  x + rnorm(length(x),
+            mean,
+            sd)
+}
+new <- tibble(predict_gain = noise(pred,
+                                  sd = sig))
+new <- slotrails %>%
+  filter(!is.na(length),
+         !is.na(elevation_gain)) %>%
+  select(length) %>%
+  bind_cols(new)
+pred_lm <- new %>%
+  lm(predict_gain ~ length, data = .)
+  p <- pred_lm %>%
+  augment() %>%
+  ggplot(mapping = aes(y = predict_gain, x = length)) +
+  geom_point(alpha = 0.5, color = "brown") +
+  geom_line(mapping = aes(y = .fitted), 
+          color = "black",
+          size = 1) +
+  labs(title = "Predicted Elevation Gain Versus Length",
+       xtitle = "Trail Length",
+       ytitle = "Predicted Elevation Gain")
+obs <- slotrails_lm %>%
+  augment() %>%
+  ggplot(mapping = aes(y = elevation_gain, x = length)) +
+  geom_point(alpha = 0.5, 
+             color = "darkgreen") +
+  geom_line(mapping = aes(y = .fitted), 
+          color = "black",
+          size = 1) + 
+  labs(title = "Observed Elevation Gain Versus Length",
+       xtitle = "Trail Length",
+       ytitle = "Observed Elevation Gain")
+grid.arrange(p, obs, ncol = 1)
+```
+
+
+
+```{r}
+nsims <- 1000
+
+sims <- map_dfc(1:nsims,
+                ~ tibble(sim = noise(pred, sd = sig)
+                        )
+                ) 
+sims <- slotrails %>%
+  filter(!is.na(length),
+         !is.na(elevation_gain)) %>%
+  select(length, elevation_gain) %>%
+  bind_cols(sims)
+
+sim_r_sq <- sims %>% 
+  map(~lm(elevation_gain ~ .x, data = sims)) %>% 
+  map(glance) %>% 
+  map_dbl(~.$r.squared)
+
+tibble(sims = sim_r_sq) %>% 
+  ggplot(aes(x = sims), color = "red") + 
+  geom_histogram(binwidth = 0.025, 
+                 fill = "darkgreen") +
+  labs(title = "Distribution of Simulated R-squared Values for Trail Length vs Elevation Gain",
+       x = "Simulated R-squared",
+       y = "", )
+```
+
+
+
+
+
+
+```{r}
+slotrails_lm <- slotrails %>%
+  lm(elevation_gain ~ difficulty_rating, data = .)
+glance(slotrails_lm)
+aug <- augment(slotrails_lm)
+pred <- predict(slotrails_lm)
+sig <- sigma(slotrails_lm)
+noise <- function(x, mean = 0, sd) {
+  x + rnorm(length(x),
+            mean,
+            sd)
+}
+new <- tibble(predict_gain = noise(pred,
+                                  sd = sig))
+new <- slotrails %>%
+  filter(!is.na(difficulty_rating),
+         !is.na(elevation_gain)) %>%
+  select(difficulty_rating) %>%
+  bind_cols(new)
+pred_lm <- new %>%
+  lm(predict_gain ~ difficulty_rating, data = .)
+  p <- pred_lm %>%
+  augment() %>%
+  ggplot(mapping = aes(y = predict_gain, x = difficulty_rating)) +
+  geom_point(alpha = 0.5, color = "brown") +
+  geom_line(mapping = aes(y = .fitted), 
+          color = "black",
+          size = 1) +
+    labs(title = "Predicted Elevation Gain Versus Length",
+       xtitle = "Difficulty_Rating",
+       ytitle = "Predcited Elevation Gain")
+obs <- slotrails_lm %>%
+  augment() %>%
+  ggplot(mapping = aes(y = elevation_gain, x = difficulty_rating)) +
+  geom_point(alpha = 0.5, 
+             color = "darkgreen")+
+  geom_line(mapping = aes(y = .fitted), 
+          color = "black",
+          size = 1) +
+    labs(title = "Observed Elevation Gain Versus Length",
+       xtitle = "Difficulty_Rating",
+       ytitle = "Observed Elevation Gain")
+grid.arrange(p, obs, ncol = 1)
+```
+
+
+
+
+
+```{r}
+nsims <- 1000
+
+sims <- map_dfc(1:nsims,
+                ~ tibble(sim = noise(pred, sd = sig)
+                        )
+                ) 
+sims <- slotrails %>%
+  filter(!is.na(difficulty_rating),
+         !is.na(elevation_gain)) %>%
+  select(difficulty_rating, elevation_gain) %>%
+  bind_cols(sims)
+
+sim_r_sq <- sims %>% 
+  map(~lm(elevation_gain ~ .x, data = sims)) %>% 
+  map(glance) %>% 
+  map_dbl(~.$r.squared)
+
+tibble(sims = sim_r_sq) %>% 
+  ggplot(aes(x = sims), color = "red") + 
+  geom_histogram(binwidth = 0.025, 
+                 fill = "darkgreen") +
+  labs(title = "Distribution of Simulated R-squared Values for Difficulty Rating vs Elevation Gain",
+       x = "Simulated R-squared",
+       y = "", )
+```
+
+
+
+
+Predictions for Other Parks [50 points]
+Now, we’re going to see how your model does for predicting the elevation gain of trails at other national parks! We’ve use the predict() function to get the predicted / fitted values for the dataset used when fitting the regression model (in lm()), but we haven’t used predict() to get predictions for a new dataset.
+
+To make predictions for a new dataset, you need to (1) assemble the new dataset to make predictions on, and (2) pass the new dataset into the newdata argument of predict().
+
+
+```{r}
+alltrails <- nptrails %>%
+  filter(area_name != "Kings Canyon National Park") %>%
+  filter(area_name != "Sequoia National Park")
+```
+
+
+```{r}
+alltrails_lm <- alltrails %>%
+  lm(elevation_gain ~ length, data = .)
+glance(alltrails_lm)
+aug <- augment(alltrails_lm)
+pred <- predict(alltrails_lm)
+sig <- sigma(alltrails_lm)
+noise <- function(x, mean = 0, sd) {
+  x + rnorm(length(x),
+            mean,
+            sd)
+}
+new <- tibble(predict_gain = noise(pred,
+                                  sd = sig))
+new <- alltrails %>%
+  filter(!is.na(length),
+         !is.na(elevation_gain)) %>%
+  select(length) %>%
+  bind_cols(new)
+pred_lm <- new %>%
+  lm(predict_gain ~ length, data = .)
+  p <- pred_lm %>%
+  augment() %>%
+  ggplot(mapping = aes(y = predict_gain, x = length)) +
+  geom_point(alpha = 0.5, color = "brown") +
+  geom_line(mapping = aes(y = .fitted), 
+          color = "black",
+          size = 1) +
+  labs(title = "Predicted Elevation Gain Versus Length",
+       xtitle = "Trail Length",
+       ytitle = "Predicted Elevation Gain")
+obs <- alltrails_lm %>%
+  augment() %>%
+  ggplot(mapping = aes(y = elevation_gain, x = length)) +
+  geom_point(alpha = 0.5, 
+             color = "darkgreen") +
+  geom_line(mapping = aes(y = .fitted), 
+          color = "black",
+          size = 1) + 
+  labs(title = "Observed Elevation Gain Versus Length",
+       xtitle = "Trail Length",
+       ytitle = "Observed Elevation Gain")
+grid.arrange(p, obs, ncol = 1)
+```
+
+
+
+```{r}
+nsims <- 1000
+
+sims <- map_dfc(1:nsims,
+                ~ tibble(sim = noise(pred, sd = sig)
+                        )
+                ) 
+sims <- alltrails %>%
+  filter(!is.na(length),
+         !is.na(elevation_gain)) %>%
+  select(length, elevation_gain) %>%
+  bind_cols(sims)
+
+sim_r_sq <- sims %>% 
+  map(~lm(elevation_gain ~ .x, data = sims)) %>% 
+  map(glance) %>% 
+  map_dbl(~.$r.squared)
+
+tibble(sims = sim_r_sq) %>% 
+  ggplot(aes(x = sims), color = "red") + 
+  geom_histogram(binwidth = 0.025, 
+                 fill = "darkgreen") +
+  labs(title = "Distribution of Simulated R-squared Values for Trail Length vs Elevation Gain",
+       x = "Simulated R-squared",
+       y = "", )
+```
+
+Use the model you chose in the last part to make predictions for the elevation gain of the trail for all of the other national parks (every park except Sequoia & Kings Canyon).
+
+With the predicted elevation gains, create a scatterplot of the residuals versus predicted values. Describe the relationship you see in the plot. What does this imply about the predictions made for other parks from your regression model?
+
+
+
+```{r}
+sims %>%
+  ggplot(aes(x = pred, y = elevation_gain)) +
+  geom_point() +
+  labs(title = "Predicted vs Observed Elevation Gain Values",
+       x = "Predicted",
+       y = "Observed") +
+  geom_abline(slope = 1,
+              intercept = 0,
+              color = "firebrick3",
+              lwd = 1.5)
+```
+
+I don't think I did this right, but if I were to do it, I would make the predictions for all the trails except the SLO trails and then use those trails to compare it to the observed SLO trails. The scatterplot would also be based on the residuals of the SLO trails and their predicted values versus the predicted values of all other parks.
+
+Part Four: Essay Responses [50 points]
+Question 1
+
+How are the predictions you made for the final similar to the simulations you made for the final project? How are the predictions you made for the final different from the simulations you made for the final project?
+
+The predictions we made and are making on the final and final project are both based on a simple linear regression. We make predictions based on the model and then compare them to the observed values. We also simulate the values of R-squared for our models to determine how much of the variance is explained by the explanatory variable in the model. However, in this final versus the final project, we compared predictions of one linear regression model to the observed of another dataset. We also used the residuals in comparison to predicted values. 
+
+Question 2
+
+Suppose you are helping another student with their R code for a research project they are working on. Going through their code, you notice they seem to copy and paste the same process multiple times in lots of different locations. What changes would you suggest they make? How would you describe to them why these changes are important?
+
+The changes I'd suggest they'd make would be to change the names, so that there isn't one name for five different things within their code. I'd also tell them to make sure they know what the code is doing, everytime they copy and paste the code and what variables they're choosing to use within the code. I would describe to them that not compeltely copy and pasting content, double-checking variable names, and the functioning of the code itself is very important to how your code works. I would also recommend that if they're copying from another source other than themself, that they know exactly what the code is doing for each line. Copying and pasting code without knowing what it does can make it harder to create code around it or to fix any bugs later on. It's important that we produce our own style of code so that we have a better understanding, which is why copying and pasting isn't the best way to learn or understand content.

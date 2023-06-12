@@ -1,0 +1,183 @@
+---
+title: "Final Exam Part 1"
+author: "Cassie Giovannetti"
+date: "3/18/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(tidyverse)
+library(dplyr)
+```
+
+
+1. Taylor is interested in writing a function that handles the various ways missing values are coded by different researchers. Taylor has found three ways NA values are coded by researchers in her field for character vectors: ".", "", and "NaN". Taylor would like to write a function that handles all of these cases.
+
+Consider the following function skeleton:
+
+```{r}
+na_function <- function(x){
+  case_when(x == "." ~ NA_character_, 
+            x == "" ~ NA_character_, 
+            x == "NaN" ~ NA_character_,
+            TRUE ~ as.character(x))
+}
+```
+
+```{r}
+test <- c(".", "", "NaN", "LOL", "IDGAF", "IDK")
+```
+
+```{r}
+testna <- na_function(test)
+```
+
+
+(a) What should Taylor insert as the values after each ~ (in place of the ____)?
+
+NA
+NA_real_
+NA_character_
+
+
+(b) Currently, this function converts every value of the character vector into an NA. What is missing from the function that will return the value of x, if x is not equal to ".", "", or "NaN"?
+
+Your response should be one line of code!
+TRUE ~ as.character(x)
+
+
+2. Taylor would like to write a new function df_na() that takes a dataframe and a variable as inputs, and uses the na_function() to replace the values for the variable input. Additionally, Taylor envisions using either df_na(dataset, "variable") or df_na(dataset, variable) as the input to the function.
+
+Which of the following functions will correctly carry out this process? The function can either return the dataframe with an adjusted version of the variable(s) supplied or a vector with the adjusted variable(s).
+
+Select all that apply
+
+(a)
+
+```{r}
+df_na <- function(df, vars){
+  df %>% 
+    mutate(vars = na_function(vars))
+}
+```
+
+(b)
+
+```{r}
+df_na <- function(df, vars){
+  na_function(df[vars])
+}
+```
+
+(c)
+
+```{r}
+df_na <- function(df, vars){
+  df %>% 
+    mutate(
+      across(.cols = {{vars}},
+             .fns = na_function
+             )
+           )
+}
+```
+
+(d)
+
+```{r}
+df_na <- function(df, vars){
+  na_function(df[[vars]])
+}
+
+```
+
+
+```{r}
+test <- c(".", "", "NaN", "LOL", "IDGAF", "IDK")
+test2 <- as.data.frame(test)
+
+testdf <- df_na(test)
+test2df <- df_na(test2)
+
+newmpg <- df_na(mpg$class)
+```
+
+
+3. Taylor has chosen to use one of the df_na() functions above that returns a dataframe with the character variables adjusted. Taylor now wants to use her function to clean up an example dataset. Taylor decides to use the mpg dataset (from the tidyverse) to test out these functions.
+
+Taylor knows that it is better to use map() functions to do repeated operations, but isn’t sure why her code isn’t working.
+
+```{r}
+mpg %>%
+  map_dfc(df_na)
+```
+
+```{r}
+mpg %>%
+  map_chr(c(manufacturer, model, trans, drv), df_na)
+```
+
+
+
+## Error in as_mapper(.f, ...): object 'manufacturer' not found
+Which of the following are reasons for the above code returning an error?
+
+Select all that apply
+
+(a) map_chr() should be used instead of map_dfc() 
+
+(b) df_na() takes two inputs and it is only being supplied one input NOT IT
+
+(c) across() is not correctly selecting the variables THIS ONE
+
+(d) map() functions work with vectors, not dataframes NOT IT
+
+```{r}
+mpg
+```
+
+
+4. Which of the following methods could Taylor use to replace the missing values of the character variables in the mpg dataset?
+
+Select all that apply
+
+(a)
+```{r}
+
+mpg1 <- mpg %>% 
+  mutate(
+    across(.cols = where(is.character), 
+           .fns = df_na)
+  )
+```
+
+(b)
+
+```{r}
+mpg2 <- mpg %>% 
+  df_na(vars = c(manufacturer, model, trans, drv))
+```
+
+(c)
+
+```{r}
+mpg3 <- mpg %>% 
+  mutate(
+    across(.cols = c(manufacturer, model, trans, drv), 
+           .fns = na_function
+           )
+  )
+```
+
+(d)
+
+```{r}
+mpg4 <- mpg %>% 
+  mutate(
+    across(.cols = everything(), 
+           .fns = ~df_na(df = .)
+           )
+  )
+```
+

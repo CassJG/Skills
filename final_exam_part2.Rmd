@@ -1,0 +1,173 @@
+---
+title: "Final Exam Part 2"
+author: "Cassie Giovannetti"
+date: "3/18/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, error = FALSE)
+library(tidyverse)
+library(here)
+```
+
+
+```{r}
+nptrails <- read.csv(here("national_park_trails.csv"))
+```
+
+Question 1.1 [10 points]
+Which National Park contains the most trails with a 5-star average rating?
+
+```{r}
+nptrails %>%
+  filter(avg_rating == 5.0) %>%
+  select(area_name, avg_rating) %>%
+  count(area_name) %>%
+  slice_max(n)
+```
+
+
+Question 1.2 [10 points]
+What are the three longest trails in this dataset, in miles?
+
+```{r}
+nptrails %>%
+  select(name, length) %>%
+  mutate(miles = length*0.000621371) %>%
+  arrange(desc(length)) %>%
+  slice_head(n = 3)
+```
+
+Question 1.3 [10 points]
+What is the most popular trail in each National Park?
+
+```{r}
+nptrails %>%
+  select(name, area_name, popularity) %>%
+  arrange(desc(popularity)) %>%
+  group_by(area_name) %>%
+  summarise(Most_Popular_Trail = max(popularity))
+```
+
+
+Question 1.4 [10 points]
+How many National Parks contain the word “Canyon” somewhere in their name?
+
+```{r}
+nptrails %>%
+  select(area_name) %>%
+  filter(str_detect(area_name, "Canyon")) %>%
+  count(area_name)
+```
+
+
+Question 1.5 [20 points]
+What are the five common words used in trail names?
+Do not include words that mean “trail”, like “trail”, “route”, “path”, “loop”.
+Do not include connector words like “to”, “and”, “with”, “via”, etc.
+
+my idea for this question:
+nptrails <- nptrails %>%
+  select(name) %>%
+  mutate(Split <- str_split(name, " "))
+
+output <- vector("character", ncol = 3)
+for (i in seq_along(nptrails$Split)) {
+    output[[i]] <- nptrails$Split[[i]]
+  }
+  
+
+
+`
+
+
+Question 1.6 [20 points]
+Write a function that takes two required inputs:
+
+the dataset
+the name of a National Park
+Your function should also accept the following optional arguments:
+
+A minimum trail length (in miles)
+A maximum trail length (in miles)
+A minimum trail rating
+The type of trail (out and back, loop, or point to point)
+The function should return all the trails that fit the supplied criteria. You may assume that the variable names of the inputted dataset match the np_trails dataset.
+
+```{r}
+nptrails <- nptrails %>%
+  mutate(miles = length*0.000621371) 
+```
+
+
+```{r}
+recommend_trails <- function(data, area_name, min_len_mi = 1, max_len_mi = 300, min_rating = 2.3, type = "loop") {
+  min_length = min(data$miles)
+  max_length = max(data$miles)
+  min_rate = min(data$avg_rating)
+  route_type = data$route_type
+  
+  if (area_name == data$area_name) {
+      if (min_len_mi == min_length){
+        trails == (data$name)
+          return(trails)
+      }
+      if (max_len_mi == max_length){
+          trails == (data$name)
+          return(trails)
+      }
+
+      if (min_rating == min_rate){
+          trails == (data$name)
+          return(trails)
+      }
+      if (type == route_type){
+         trails == (data$name)
+        return(trails)
+      }
+
+    }
+
+}
+  
+```
+
+
+  }
+
+Include the following code in your response to verify that your function works:
+
+```{r}
+nptrails %>%
+  recommend_trails("Yellowstone National Park", 
+                   min_len_mi = 10, 
+                   min_rating = 4, 
+                   type = "loop")
+```
+```{r}
+nptrails %>%
+  recommend_trails("Yellowstone National Park", 
+                   min_len_mi = 10, 
+                   min_rating = 4, 
+                   type = "loop")
+```
+
+
+Question 1.7 [20 points]
+Use your function from Question 1.6, along with a map() or apply() function to recommend to me all the trails that are:
+
+20-30 miles long (good for a two day backpacking trip!)
+
+Rated at least a 4.5
+
+Loop trails (I don’t like to retrace my steps)
+
+In one of the parks closest to SLO:
+
+* Sequoia National Park
+* Joshua Tree National Park
+* Lassen Volcanic National Park
+* Kings Canyon National Park
+* Pinnacles National Park
+* Death Valley National Park
