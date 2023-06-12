@@ -1,0 +1,73 @@
+---
+title: "CheckInStuff"
+author: "Cassie Giovannetti"
+date: "2023-04-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+head(iris)
+```
+
+```{r}
+iris %>%
+  mutate(Petal.Ratio = 
+           Petal.Length/Petal.Width) %>%
+  group_by(Species) %>%
+  summarize(Avg.Petal.Ratio = median(Petal.Ratio)) %>%
+  arrange(Avg.Petal.Ratio)
+```
+```{r}
+mean(iris[iris$Species == "setosa", "Petal.Length"])
+```
+
+```{r}
+iris %>%
+  filter("Petal.Length") %>%
+  pull("setosa") %>%
+  mean()
+```
+
+```{r}
+iris %>%
+  filter(Species == "setosa") %>%
+  select(Petal.Length) %>%
+  summarize(mean(Petal.Length))
+```
+
+```{r}
+iris %>%
+  pull(Petal.Length) %>%
+  filter(Species == "setosa") %>%
+  mean()
+```
+
+```{r}
+iris %>%
+  filter(Species == "setosa") %>%
+  select(Petal.Length) %>%
+  mean()
+
+```
+
+```{r}
+iris %>%
+  filter(Species == "setosa") %>%
+  pull(Petal.Length) %>%
+  mean()
+```
+
+```{r}
+iris %>%
+  select(Species == "setosa") %>%
+  filter(Petal.Length) %>%
+  summarize(mean(Petal.Length))
+```
+```{r}
+head(us_arrests)
+```
+

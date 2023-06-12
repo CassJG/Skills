@@ -1,0 +1,71 @@
+---
+title: "lab8art"
+author: "Cassie Giovannetti"
+date: "2023-06-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(jasmines)
+library(paletteer)
+library(RColorBrewer)
+library(aRtsy)
+library(viridis)
+```
+
+
+```{r}
+mtcars$am <- factor(mtcars$am, labels = c("automatic", "manual"))
+mtcars %>%
+  ggplot(aes(x = mpg, y = qsec, color = cyl, size = hp)) + 
+  geom_point(shape = 8)+
+  scale_color_gradient(high = "lightpink", low = "lightblue") +  # Apply a gradient color scale
+  scale_size_continuous(range = c(1, 10)) +  # Adjust the size range
+  theme_void()+
+  theme(legend.position = "none") 
+```
+
+
+### Title: Snowfall Miracle
+
+#### The snowflakes fall first from the clouds in a lovely blue breeze before turning a shady purple as it falls. Finally, as it goes to touch the ground the snowflakes go from pruple to pink. Pink as a baby's cheeks when they giggle.
+
+#### I choose to do the shape snowflakes in the code with shape = 8 because it looks like snowflakes blowing in the wind. I set the color gradient from light blue to light pink as the low to have the snowflakes change color as it descends. The size was based on the horsepower of the cars in mtcars datset, which I adjusted to be from 1 to 10 in size. It looks as though the snowflakes are growing bigger as they come closer due to this.
+
+-----
+
+```{r}
+destruction <- canvas_flame(
+  colors = "#39FF14",
+  background = "#000000",
+  iterations = 10000000,
+  variations = 4,
+  symmetry = 2,
+  blend = TRUE,
+  weighted = FALSE,
+  post = FALSE,
+  final = FALSE,
+  extra = FALSE,
+  display = "colored",
+  zoom = 1,
+  resolution = 1000,
+  gamma = 1
+)
+```
+
+
+
+```{r}
+destruction
+```
+
+### Title: Destruction
+
+#### This piece is the embodiment of destruction. The energy that's contained in the hands of those who destroy. This destructive agressive energy swirls around in darkness. It doesn't stay in one place, it jumps and intertwines with itself.
+
+#### The code uses canvas_flame which implements a fractal flame algorithm. I choose a bright green color (color = "#39FF14") that displays the galaxy looking shape on the black background. I had 1000000 iterations because more iterations makes the image thicker or stronger looking. I had a value of 2 for symmetry, which created the symmetry within the galaxy that you can see with it's symmetric curves. I had a value of 4 variations for no reason at all other than that it created the galaxy shape. The variations are different functions that are used to create the image and the main component of the algortihm. 

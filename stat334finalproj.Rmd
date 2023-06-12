@@ -1,0 +1,148 @@
+---
+title: 'stat 334 final project'
+author: "Cassie Giovannetti"
+date: "2023-06-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(car)
+library(olsrr)
+library(tidyverse)
+library(effects)
+```
+
+```{r}
+flights <- read.csv("/Users/giovannetticharles/Desktop/Flights-1/flights.csv")
+```
+
+
+```{r}
+flights1 <- lm(arr_delay ~ dep_delay + month + carrier + origin + air_time + distance + dep_hour, data=flights)
+summary(flights1)
+
+```
+```{r}
+ols_vif_tol(flights1)
+```
+
+
+```{r}
+residualPlots(flights1,type="rstudent",pch=16,quadratic=FALSE,id=FALSE,tests=FALSE)
+```
+
+
+```{r}
+qqPlot(flights1,envelope=FALSE,id=FALSE,pch=16)
+```
+
+
+```{r}
+influenceIndexPlot(flights1,vars=c("Studentized"),id=FALSE,pch=16)
+```
+```{r}
+3*9.891
+```
+No extreme outliers
+
+
+```{r}
+influenceIndexPlot(flights1,vars=c("hat"),id=FALSE,pch=16)
+```
+```{r}
+(3*9)/3000
+```
+There's a lot of high leverage values based on this cutoff.
+
+```{r}
+influenceIndexPlot(flights1,vars=c("Cook"),id=FALSE,pch=16)
+```
+
+```{r}
+qf(0.5, 9, 2991)
+```
+
+
+```{r}
+flights$cair_time<- scale(flights$air_time,scale=FALSE)
+flights$cdistance <- scale(flights$distance,scale=FALSE)
+flights2 <- lm(arr_delay ~ dep_delay + month + carrier + origin + cair_time + cdistance + dep_hour, data=flights)
+summary(flights2)
+```
+```{r}
+plot(flights$air_time, flights$distance)
+cor.test(flights$air_time, flights$distance)
+```
+
+
+
+```{r}
+ols_vif_tol(flights2)
+```
+
+```{r}
+flights3 <- lm(arr_delay ~ dep_delay + month + carrier + origin + air_time + dep_hour, data=flights)
+summary(flights3)
+```
+```{r}
+ols_vif_tol(flights3)
+```
+
+```{r}
+qqPlot(flights3,envelope=FALSE,id=FALSE,pch=16)
+```
+
+
+
+```{r}
+flights4 <- lm(arr_delay ~ (1/(dep_delay)**4) + (1/(month)**4) + carrier + origin + (1/(air_time)**4) + (1/(dep_hour)**4), data=flights)
+summary(flights4)
+```
+
+```{r}
+qqPlot(flights4,envelope=FALSE,id=FALSE,pch=16)
+```
+
+
+# Generate some example data
+```{r}
+x <- flights1
+boxcox_results <- boxcox(x)
+lambda <- boxcox_results$x[which.max(boxcox_results$y)]
+transformed_data <- ifelse(lambda != 0, (x^lambda - 1)/lambda, log(x))
+```
+
+```{r}
+flights5 <- lm(arr_delay ~ dep_delay * month * carrier * origin * air_time * dep_hour, data=flights)
+summary(flights5)
+```
+
+```{r}
+qqPlot(flights5,envelope=FALSE,id=FALSE,pch=16)
+```
+
+```{r}
+all.flights1 <- ols_step_all_possible(flights1)
+View(all.flights1)
+# The plot will appear in a separate window.
+plot(all.flights1)
+```
+```{r}
+flights6 <- lm(arr_delay ~ dep_delay + month + carrier + origin + air_time, data=flights)
+summary(flights6)
+
+```
+
+```{r}
+Anova(flights6)
+```
+
+
+```{r}
+qqPlot(flights6,envelope=FALSE,id=FALSE,pch=16)
+```
+
+
+
+
