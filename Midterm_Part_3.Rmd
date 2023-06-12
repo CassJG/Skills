@@ -1,0 +1,92 @@
+---
+title: "Midterm Part 3"
+author: "Cassie Giovannetti"
+date: "February 8, 2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warnings = FALSE)
+library(tidyverse)
+library(here)
+```
+
+Part Three: Open-Ended Analysis [150 points]
+Please submit your .Rmd and .html for this section to Canvas In this section, you may use any formatting options you wish.
+
+Keep in mind your report should look professional! Use the tools you’ve learned to create a nice report that is easy to read! In your report, there should be either no code output, or code that can be toggled to appear / disappear.
+
+How do the minimum wages differ by region?
+Decide on your own regional grouping for the states. Your grouping is required to have at least three groups. For example, you might consider East vs. Central vs. West or something more nuanced. You are welcome to reference any internet source to determine your grouping.
+
+Compare the minimum wage between regions to come up with an interesting insight. For example: Did some regions grow faster than others? Do some regions tend to have a higher minimum wage than others? etc.
+
+Create a write-up of approximately one printed page (including all plots and tables) that tells a clear story. Your write-up must include at least one visualization and at least one table of summary statistics.
+
+```{r}
+minimum_wage <- read_csv(here("Minimum Wage Data.csv"))
+minimum_wage_factor <- as.factor(minimum_wage$State)
+```
+```{r}
+glimpse(minimum_wage)
+```
+
+
+```{r}
+region_minimum_wage <- minimum_wage %>%
+  mutate(Region = fct_collapse(State,
+    West = c("California", "Oregon", "Washington", "Arizona", "Idaho", "Nevada", "Montana", "Wyoming", "Colorado", "New Mexico", "Utah"),
+    CentralUS = c("North Dakota", "South Dakota", "Nebraska", "Kansas", "Minnesota", "Missouri", "Iowa", "Wisconsin", "Illinois", "Indiana", "Ohio", "Michigan"),
+    South = c("Oklahoma", "Texas", "Arkansas", "Tennessee", "Louisiana", "Mississippi", "Alabama", "Kentucky", "Georgia", "Florida", "South Carolina", "North Carolina"),
+    Northeast = c("West Virginia", "Virginia", "Maryland", "Massachusetts", "Pennsylvania", "New Jersey", "New York", "Connecticut", "Rhode Island", "New Hampshire", "Vermont", "Maine", "Delaware", "District of Columbia"),
+    Off_Mainland = c("Alaska", "Hawaii", "Puerto Rico", "U.S. Virgin Islands", "Guam")
+  ))
+```
+
+```{r}
+glimpse(region_minimum_wage)
+```
+
+```{r}
+region_minimum_wage %>%
+  group_by(Region) %>%
+  summarise(Mean_Minimum_Wage = mean(Effective.Minimum.Wage))
+```
+
+### Overall, the means of the minimum wage of these five regions for all years from 1968 to 2020 end up being between 4 and 5 dollars.
+
+```{r}
+region_minimum_wage %>%
+  group_by(Region) %>%
+  summarise(Standard_Deviation = sd(Effective.Minimum.Wage))
+```
+
+
+```{r}
+region_minimum_wage %>%
+  ggplot(aes(y = Effective.Minimum.Wage, x = Region)) +
+  geom_boxplot() +
+  labs(x = "Region", y = "Minimum Wage of 2020")
+
+```
+
+```{r}
+region_minimum_wage %>%
+  ggplot(aes(y = Effective.Minimum.Wage, x = Region, color = Year)) +
+  geom_point() +
+  labs(x = "Region", y = "Minimum Wage of 2020")
+```
+### The five regions had their minimum wages grow progessively over each year; however, as time passed, the West and Northeast had higher minimum wages than the other regions.
+
+```{r}
+region_minimum_wage %>%
+  group_by(Year) %>%
+  summarise(Mean = mean(Effective.Minimum.Wage)) %>%
+  ggplot(aes(y = Mean, x = Year)) +
+  geom_point() +
+  labs(x = "Year", y = "Mean Minimum Wage of 2020")
+```
+
+
+
+
