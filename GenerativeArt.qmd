@@ -1,0 +1,42 @@
+---
+title: "Generative Art"
+format:
+  pdf:
+    revealjs: 
+    theme: cosmo
+editor: visual
+---
+
+## **Art Created By Data and the Jasmines Package**
+
+```{r,  include = FALSE}
+library(tidyverse)
+```
+
+```{r, include = FALSE}
+mtcars %>%
+  ggplot(aes(x = mpg, y = disp, color = cyl, size = hp)) + 
+  geom_point()+
+  theme_void()+
+  theme(legend.position = "none")
+```
+
+```{r,  include = FALSE}
+library(jasmines)
+```
+
+#### *Heart's Galore*
+
+```{r, echo = FALSE}
+use_seed(3838) %>%
+  entity_heart(grain = 120) %>%
+  unfold_tempest(iterations = 1, scatter = TRUE) %>%
+  style_ribbon(background = "lightpink")
+```
+
+```{r, echo = FALSE}
+use_seed(3838) %>%
+  entity_heart(grain = 120) %>%
+  unfold_tempest(iterations = 20, scatter = TRUE) %>%
+  style_ribbon(palette = "magma", background = "black", type ="point")
+```

@@ -1,0 +1,162 @@
+---
+title: "Lab 3: Using APIs"
+author: "Cassie Giovannetti, Henry Rossi, Sam Todd"
+format: 
+  html:
+    self-contained: true
+    code-tools: true
+    code-overflow: wrap
+    toc: true
+editor: source
+execute: 
+  error: true
+  echo: true
+  message: false
+  warning: false
+---
+
+## Set-Up and Packages
+
+```{r}
+# load in packages
+library(tidyverse)
+library(lubridate)
+library(jsonlite)
+library(leaflet)
+library(httr)
+```
+
+## Pass Times for U.S. State Captials
+
+### State Capital Information
+
+```{r}
+# read the lat/long data for each capital
+myLink <- "https://people.sc.fsu.edu/~jburkardt/datasets/states/state_capitals_ll.txt"
+data <- readLines(myLink)
+
+capitals <- as.data.frame(data) |> 
+  separate(col = data, 
+           sep = " +",
+           into = c("State", "Latitude", "Longitude")) |> 
+  mutate(State = str_trim(State))
+
+# read the name of each capital
+myLink2 <- "https://people.sc.fsu.edu/~jburkardt/datasets/states/state_capitals_name.txt"
+data2 <- readLines(myLink2)
+
+capital_names <- as.data.frame(data2) |> 
+  separate(col = data2, 
+           sep = "\"",
+           into = c("State", "Capital")) |> 
+  mutate(State = str_trim(State))
+
+# join capital names to lat/long
+capitals_full <- left_join(capitals, capital_names) |> 
+  filter(State != "US",
+         State != "PR",
+         State != "DC")
+
+# add a column with the URL needed for the API
+capitals_full <- capitals_full |> 
+  mutate(API_url = paste("https://api.g7vrd.co.uk/v1/satellite-passes/25544/", Latitude, "/", Longitude, ".json?hours=72", sep = ""))
+
+# data preview
+head(capitals_full)
+```
+
+### Pass Times API
+
+```{r}
+# function to get the start and end pass times given a URL
+get_pass_times <- function(url){
+  res <- GET(url)
+  pass_times <- fromJSON(rawToChar(res$content))
+  if(length(pass_times$passes)<1){
+    start_end <- list(time = c(NA, NA, NA))
+  }
+  else{
+    start_end <- list(time = pass_times[[11]]$tca[1:3])
+  }
+  return(start_end)
+}
+```
+
+```{r}
+# get the pass times for all states
+pass_times <- map(capitals_full$API_url, get_pass_times)
+
+# combine all of the lists into a single list
+pass_times <- do.call(rbind, lapply(pass_times, as.data.frame))
+
+# add the state name for each observation
+pass_times$State <- capitals_full$State[(seq_len(nrow(pass_times)) - 1) %/% 3 + 1]
+
+# data preview
+head(pass_times)
+```
+
+Note: If you live north or south of 51.6 degrees, the ISS will never go directly over your head- this includes places like Alaska. (<https://spotthestation.nasa.gov/message_example.cfm>)
+
+## Mapping the Data
+
+```{r}
+# data in format for the leaflet
+capital_times_leaflet <- pass_times |> 
+  left_join(capitals_full) |> 
+  select(Capital, Latitude, Longitude, time) |> 
+  group_by(Capital) |> 
+  mutate(pass = paste("pass_", row_number(), sep = ""),
+         time = ymd_hms(time),
+         Latitude = as.numeric(Latitude),
+         Longitude = as.numeric(Longitude)) |> 
+  pivot_wider(names_from = pass,
+              values_from = time) |> 
+  arrange(pass_1)
+```
+
+```{r}
+# order of expected first passes by capital
+route_ISS <- capital_times_leaflet |> 
+  select(Latitude, Longitude, pass_1) |> 
+  drop_na() |> 
+  arrange(pass_1)
+```
+
+```{r}
+# custom NASA icon
+icon_NASA <- makeIcon(iconUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/NASA_logo.svg/2449px-NASA_logo.svg.png",
+                iconHeight = 26,
+                iconWidth = 32)
+```
+
+```{r}
+# leaflet of capitals
+capital_times_leaflet |> 
+  leaflet() |> 
+  addTiles() |> 
+  addMarkers(lat = ~Latitude, 
+             lng = ~Longitude, 
+             label = paste(capital_times_leaflet$Capital, 
+                           ": ", 
+                           capital_times_leaflet$pass_1,
+                           sep = ""),
+             popup = paste(capital_times_leaflet$Capital,
+                           "<br>Pass 1: ",
+                           capital_times_leaflet$pass_1,
+                           "<br>Pass 2: ",
+                           capital_times_leaflet$pass_2,
+                           "<br>Pass 3: ",
+                           capital_times_leaflet$pass_3),
+             icon = icon_NASA) |> 
+  addPolylines(data = route_ISS, 
+               lat = ~Latitude, 
+               lng = ~Longitude,
+               color = "red")
+```
+
+## References
+
+- ChatGPT (1): <https://i.imgur.com/WsmKrW2.jpg>
+
+- ChatGPT (2): <https://i.imgur.com/LBvPdIF.jpg>
