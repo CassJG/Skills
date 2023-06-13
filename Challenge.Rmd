@@ -1,0 +1,59 @@
+---
+title: "Lab 3 Challenge"
+author: "Cassie Giovannetti"
+date: "1/22/2022"
+output: 
+  html_document:
+    theme: cerulean
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+library(tidyverse)
+library(here)
+```
+
+```{r}
+hiphop <- read_csv(here("Lab Assignments", "Lab 3",  "hiphop.csv"))
+```
+
+#Challenge
+####Published Comparisons
+In the published article (You Know What It Is: Learning Words through Listening to Hip-Hop), the author presents a series of comparisons about the variables which most explain an individual’s familiarity with African American English (AAE).
+
+Let us instead compare the number of artists participants reported liking for each genre. Specifically, you will determine which music genre most differentiates each of the demographic groups provided. That is, which genre had much higher average (mean or median) reported artists in one group than the other.
+
+```{r}
+select_hiphop <- hiphop %>%
+  select(subj, age, sex, ethnic, intl, vocal, classical, folk, rock, country, pop, alternative, hiphop, unclassifiable) %>%
+  mutate(sex = case_when(sex == "Female" ~ "F",
+                         sex == "Male" ~ "M")) %>%
+  mutate(new_ethnic = if_else(ethnic == "white", "white", "non-white")) %>%
+  arrange(subj)
+```
+
+#### a. Male versus Female
+```{r}
+#Code to differentiate the average number of artists that the participants liked for each genre based on if they were male(M) or female(F)
+select_hiphop %>%
+  group_by(sex)%>%
+  summarise(across(intl:unclassifiable, mean))
+```
+
+Those identifying as female in this study liked more country and pop artists on average than their male counterparts, while those who identified as male liked more vocal, classical, and rock artists on average. 
+
+#### b. White versus Non-White
+```{r}
+#Code to differentiate the average number of artists that the participants liked for each genre based on if they were white or non-white
+select_hiphop %>%
+  group_by(new_ethnic)%>%
+  summarise(across(intl:unclassifiable, mean))
+```
+
+Those identifying as white in this study liked more vocal, folk, rock, country, alternative artists on average than their non-white counterparts, while those who identified as non-white liked more international and hiphop artists on average.
+
+#### Based on the design of this study and its context (African American English), what are at least two concerns you have?
+
+My two concerns about the design is that all the participants are from linguistics, music, and sociology classes at University of Minnesota. Firstly, these participants are likely more knowledgable about linguistics and music because they are taking these classes as well. Second, using only undergraduates from University of Minnesota limits the study's generalizability and its range of answers from very similar participants.
+
